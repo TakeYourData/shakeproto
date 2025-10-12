@@ -19,7 +19,9 @@ public class HandshakePacket extends Packet {
     public HandshakePacket() {}
 
     @Override
-    public void serializeData(DataOutputStream dos) {}
+    public void serializeData(DataOutputStream dos) throws IOException {
+        dos.write(clientNonce);
+    }
 
     public String getClientId() {
         return clientId;
