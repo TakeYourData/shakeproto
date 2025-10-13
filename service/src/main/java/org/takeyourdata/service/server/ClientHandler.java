@@ -1,36 +1,38 @@
 package org.takeyourdata.service.server;
 
+import org.jetbrains.annotations.NotNull;
 import org.takeyourdata.protocol.packets.HandshakePacket;
 import org.takeyourdata.protocol.packets.Packet;
+import org.takeyourdata.service.server.handlers.HandshakeHandler;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Base64;
 
 public class ClientHandler implements Runnable {
     private final Socket socket;
+    private final DataInputStream in;
+    private final DataOutputStream out;
 
-    public ClientHandler(Socket socket) {
+    public ClientHandler(@NotNull Socket socket) throws IOException {
         this.socket = socket;
+
+        this.in = new DataInputStream(socket.getInputStream());
+        this.out = new DataOutputStream(socket.getOutputStream());
     }
 
     @Override
     public void run() {
         try {
             while (!socket.isClosed()) {
-                DataInputStream in = new DataInputStream(socket.getInputStream());
-                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
                 int length = in.readInt();
                 byte[] data = new byte[length];
                 in.readFully(data);
 
-                HandshakePacket packet = (HandshakePacket) Packet.getData(data);
-
-                System.out.println("CLIENT ID: " + packet.getClientId());
-                System.out.println("CLIENT NONCE: " + Base64.getEncoder().encodeToString(packet.getClientNonce()));
+                Packet packet = Packet.deserialize(data);
+                handlePacket(packet);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -40,6 +42,21 @@ public class ClientHandler implements Runnable {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    public void sendPacket(@NotNull Packet packet) throws Exception {
+        byte[] data = packet.serialize(packet.getType());
+        out.writeInt(data.length);
+        out.write(data);
+        out.flush();
+    }
+
+    private void handlePacket(Packet packet) {
+        if (packet instanceof HandshakePacket) {
+            HandshakeHandler handshakeHandler = new HandshakeHandler((HandshakePacket) packet);
+
+            handshakeHandler.handle();
         }
     }
 }

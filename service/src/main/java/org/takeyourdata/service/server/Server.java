@@ -13,7 +13,13 @@ public class Server {
 
             while (!serverSocket.isClosed()) {
                 Socket client = serverSocket.accept();
-                new Thread(() -> new ClientHandler(client).run()).start();
+                new Thread(() -> {
+                    try {
+                        new ClientHandler(client).run();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }).start();
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

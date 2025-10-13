@@ -1,5 +1,7 @@
 package org.takeyourdata.protocol.packets;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -14,7 +16,7 @@ public class MessagePacket extends Packet {
     private String recipientId;
     private byte[] encryptedContent;
 
-    public MessagePacket(DataInputStream dis) throws Exception {
+    public MessagePacket(@NotNull DataInputStream dis) throws Exception {
         super(PacketType.MESSAGE.getValue());
 
         this.senderId = dis.readUTF();
@@ -55,7 +57,7 @@ public class MessagePacket extends Packet {
     }
 
     @Override
-    public void serializeData(DataOutputStream dos) throws IOException {
+    public void writeData(@NotNull DataOutputStream dos) throws IOException {
         dos.write(encryptedContent);
     }
 

@@ -1,12 +1,12 @@
 package org.takeyourdata.protocol.packets;
 
+import org.jetbrains.annotations.NotNull;
 import org.takeyourdata.protocol.ShakeProtocol;
 
 import java.io.*;
 import java.time.Instant;
-import java.util.Base64;
 
-public abstract class Packet {
+public abstract class Packet implements Serializable {
     protected byte type;
     protected int version;
     protected long timestamp;
@@ -19,7 +19,7 @@ public abstract class Packet {
 
     public Packet() {}
 
-    public byte[] sendData(byte type) throws Exception {
+    public byte[] serialize(byte type) throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(out);
 
@@ -27,12 +27,12 @@ public abstract class Packet {
         dos.writeInt(this.version);
         dos.writeLong(this.timestamp);
 
-        serializeData(dos);
+        writeData(dos);
 
         return out.toByteArray();
     }
 
-    public static Packet getData(byte[] data) throws Exception {
+    public static @NotNull Packet deserialize(byte[] data) throws Exception {
         ByteArrayInputStream in = new ByteArrayInputStream(data);
         DataInputStream dis = new DataInputStream(in);
 
@@ -40,27 +40,29 @@ public abstract class Packet {
         int version = dis.readInt();
         long timestamp = dis.readLong();
 
-        System.out.println(type);
-        System.out.println(version);
-        System.out.println(timestamp);
 
         Packet packet = switch (type) {
             case 0x01 -> new HandshakePacket(dis);
-            case 0x02 -> new SessionPacket(dis);
+            case 0x02 -> new KeyExchangePacket(dis);
             case 0x03 -> new MessagePacket(dis);
             default -> null;
         };
 
+        packet.type = type;
         packet.version = version;
         packet.timestamp = timestamp;
 
         return packet;
     }
 
-    protected abstract void serializeData(DataOutputStream dos) throws Exception;
+    protected abstract void writeData(DataOutputStream dos) throws Exception;
 
     public int getVersion() {
         return version;
+    }
+
+    public byte getType() {
+        return type;
     }
 
     public long getTimestamp() {
