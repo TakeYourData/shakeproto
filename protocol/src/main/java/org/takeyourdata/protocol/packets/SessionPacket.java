@@ -1,49 +1,33 @@
 package org.takeyourdata.protocol.packets;
 
-import java.io.DataInputStream;
+import org.jetbrains.annotations.NotNull;
+import org.takeyourdata.protocol.Token;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.security.*;
 
 public class SessionPacket extends Packet {
-    private byte[] publicKey;
-    private byte[] signature;
-    private byte[] privateKey;
+    private final byte[] sessionToken;
 
-    private final Signature sig = Signature.getInstance("SHA256withRSA");
-
-    public SessionPacket(DataInputStream dis) throws Exception {
+    public SessionPacket(@NotNull Token token) {
         super(PacketType.SESSION.getValue());
-
-        this.publicKey = dis.readNBytes(256);
-        this.signature = dis.readNBytes(32);
+        this.sessionToken = token.getSessionToken();
     }
 
-    public SessionPacket() throws Exception {}
-
-    public boolean verifySignature(PublicKey verifyingKey, byte[] clientSign) throws Exception {
-        sig.initVerify(verifyingKey);
-        sig.update(publicKey);
-        return sig.verify(clientSign);
+    public SessionPacket() {
+        Token token = new Token();
+        this.sessionToken = token.getSessionToken();
     }
 
     @Override
-    public void serializeData(DataOutputStream dos) throws IOException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(2048, new SecureRandom());
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+    public void writeData(@NotNull DataOutputStream dos) throws IOException {
+        int length = sessionToken.length;
 
-        PublicKey serverPk = keyPair.getPublic();
-        PrivateKey serverSk = keyPair.getPrivate();
-        this.privateKey = serverSk.getEncoded();
-        sig.initSign(serverSk);
-        sig.update(serverPk.getEncoded());
-
-        dos.write(serverPk.getEncoded());
-        dos.write(sig.sign());
+        dos.writeInt(length);
+        dos.write(sessionToken);
     }
 
-    public byte[] getPublicKey() { return publicKey; } // Client Public Key
-    public byte[] getPrivateKey() { return privateKey; } // Server Private Key
-    public byte[] getSignature() { return signature; } // Client Signature
+    public byte[] getSessionToken() {
+        return sessionToken;
+    }
 }
