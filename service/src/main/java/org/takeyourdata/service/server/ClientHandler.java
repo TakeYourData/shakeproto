@@ -3,6 +3,7 @@ package org.takeyourdata.service.server;
 import org.jetbrains.annotations.NotNull;
 import org.takeyourdata.protocol.packets.HandshakePacket;
 import org.takeyourdata.protocol.packets.Packet;
+import org.takeyourdata.protocol.packets.SessionPacket;
 import org.takeyourdata.service.server.handlers.HandshakeHandler;
 
 import java.io.DataInputStream;
@@ -45,18 +46,26 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public void sendPacket(@NotNull Packet packet) throws Exception {
+    private void sendPacket(@NotNull Packet packet) throws Exception {
         byte[] data = packet.serialize(packet.getType());
         out.writeInt(data.length);
         out.write(data);
         out.flush();
     }
 
-    private void handlePacket(Packet packet) {
+    private void handlePacket(Packet packet) throws Exception {
         if (packet instanceof HandshakePacket) {
             HandshakeHandler handshakeHandler = new HandshakeHandler((HandshakePacket) packet);
 
-            handshakeHandler.handle();
+            handshakeHandler.handle(result -> {
+                SessionPacket sessionPacket = (SessionPacket) result;
+                sessionPacket.writeData(out);
+                sendPacket(result);
+            });
         }
     }
+
+    private void closeConnection() {}
+
+    private void verifyConnection() {}
 }

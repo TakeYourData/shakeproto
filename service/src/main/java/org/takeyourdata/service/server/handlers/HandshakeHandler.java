@@ -2,21 +2,53 @@ package org.takeyourdata.service.server.handlers;
 
 import org.jetbrains.annotations.NotNull;
 import org.takeyourdata.protocol.packets.HandshakePacket;
+import org.takeyourdata.protocol.packets.SessionPacket;
+import org.takeyourdata.service.server.JedisClient;
+import org.takeyourdata.service.server.ProcessedPacket;
+import redis.clients.jedis.JedisPooled;
+
+import java.util.Base64;
 
 public class HandshakeHandler implements Handler {
-    private final HandshakePacket packet;
+    private final int userId;
     private final String clientId;
     private final String hardwareId;
     private final String location;
 
     public HandshakeHandler(@NotNull HandshakePacket packet) {
-        this.packet = packet;
+        this.userId = packet.getUserId();
         this.clientId = packet.getClientId();
         this.hardwareId = packet.getHardwareId();
         this.location = packet.getLocation();
     }
 
     @Override
-    public void handle() {
+    public void handle(ProcessedPacket packet) throws Exception {
+        SessionPacket sessionPacket = new SessionPacket();
+        JedisPooled jedis = new JedisClient().getJedis();
+        String token = Base64.getEncoder().withoutPadding().encodeToString(sessionPacket.getSessionToken());
+
+        jedis.hset(
+                token,
+                "userId",
+                String.valueOf(userId)
+        );
+        jedis.hset(
+                token,
+                "clientId",
+                clientId
+        );
+        jedis.hset(
+                token,
+                "hardwareId",
+                hardwareId
+        );
+        jedis.hset(
+                token,
+                "location",
+                location
+        );
+
+        packet.process(sessionPacket);
     }
 }
