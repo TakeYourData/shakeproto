@@ -14,20 +14,27 @@ public class HandshakeHandler implements Handler {
     private final String clientId;
     private final String hardwareId;
     private final String location;
+    private final byte[] clientNonce;
 
     public HandshakeHandler(@NotNull HandshakePacket packet) {
         this.userId = packet.getUserId();
         this.clientId = packet.getClientId();
         this.hardwareId = packet.getHardwareId();
         this.location = packet.getLocation();
+        this.clientNonce = packet.getClientNonce();
     }
 
     @Override
-    public void handle(ProcessedPacket packet) throws Exception {
+    public void handle(@NotNull ProcessedPacket packet) throws Exception {
         SessionPacket sessionPacket = new SessionPacket();
         JedisPooled jedis = new JedisClient().getJedis();
         String token = Base64.getEncoder().withoutPadding().encodeToString(sessionPacket.getSessionToken());
 
+        jedis.hset(
+                token,
+                "clientNonce",
+                Base64.getEncoder().withoutPadding().encodeToString(clientNonce)
+        );
         jedis.hset(
                 token,
                 "userId",

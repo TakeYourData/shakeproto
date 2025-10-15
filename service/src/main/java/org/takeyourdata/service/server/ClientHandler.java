@@ -1,10 +1,13 @@
 package org.takeyourdata.service.server;
 
 import org.jetbrains.annotations.NotNull;
+import org.takeyourdata.protocol.NonceException;
+import org.takeyourdata.protocol.packets.ErrorPacket;
 import org.takeyourdata.protocol.packets.HandshakePacket;
 import org.takeyourdata.protocol.packets.Packet;
 import org.takeyourdata.protocol.packets.SessionPacket;
 import org.takeyourdata.service.server.handlers.HandshakeHandler;
+import org.takeyourdata.service.server.handlers.SessionHandler;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -38,11 +41,7 @@ public class ClientHandler implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            closeConnection();
         }
     }
 
@@ -54,18 +53,45 @@ public class ClientHandler implements Runnable {
     }
 
     private void handlePacket(Packet packet) throws Exception {
-        if (packet instanceof HandshakePacket) {
-            HandshakeHandler handshakeHandler = new HandshakeHandler((HandshakePacket) packet);
+        if (packet instanceof HandshakePacket handshakePacket) {
+            HandshakeHandler handshakeHandler = new HandshakeHandler(handshakePacket);
 
             handshakeHandler.handle(result -> {
                 SessionPacket sessionPacket = (SessionPacket) result;
                 sessionPacket.writeData(out);
+                sendPacket(handshakePacket);
                 sendPacket(result);
+            });
+        } else if (packet instanceof SessionPacket sessionPacket) {
+            SessionHandler sessionHandler = new SessionHandler(sessionPacket);
+
+            sessionHandler.handle(result -> {
+                HandshakePacket handshakePacket = (HandshakePacket) result;
+                byte[] nonce = handshakePacket.getClientNonce();
+
+                if (nonce != sessionPacket.getPacketNonce()) {
+                    ErrorPacket errorPacket = new ErrorPacket(new NonceException("Nonce is invalid"));
+                    sendPacket(errorPacket);
+                    closeConnection();
+                }
+
+                new ClientSession(
+                        socket,
+                        nonce,
+                        handshakePacket.getUserId(),
+                        handshakePacket.getClientId(),
+                        handshakePacket.getHardwareId(),
+                        handshakePacket.getLocation()
+                );
             });
         }
     }
 
-    private void closeConnection() {}
-
-    private void verifyConnection() {}
+    private void closeConnection() {
+        try {
+            socket.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

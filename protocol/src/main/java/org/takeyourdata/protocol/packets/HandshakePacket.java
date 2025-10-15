@@ -8,11 +8,11 @@ import java.io.IOException;
 import java.security.SecureRandom;
 
 public class HandshakePacket extends Packet {
-    private int userId;
-    private String clientId;
-    private byte[] clientNonce;
-    private String hardwareId;
-    private String location;
+    private final int userId;
+    private final String clientId;
+    private final byte[] clientNonce;
+    private final String hardwareId;
+    private final String location;
 
     public HandshakePacket(@NotNull DataInputStream dis) throws IOException {
         super(PacketType.HANDSHAKE.getValue());
@@ -24,7 +24,17 @@ public class HandshakePacket extends Packet {
         this.location = dis.readUTF();
     }
 
-    public HandshakePacket() {}
+    public HandshakePacket(byte[] clientNonce,
+                           int userId,
+                           String clientId,
+                           String hardwareId,
+                           String location) {
+        this.clientNonce = clientNonce;
+        this.userId = userId;
+        this.clientId = clientId;
+        this.hardwareId = hardwareId;
+        this.location = location;
+    }
 
     @Override
     public void writeData(@NotNull DataOutputStream dos) throws IOException {
