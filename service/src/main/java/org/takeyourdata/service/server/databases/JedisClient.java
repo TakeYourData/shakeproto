@@ -1,4 +1,4 @@
-package org.takeyourdata.service.server;
+package org.takeyourdata.service.server.databases;
 
 import redis.clients.jedis.JedisPooled;
 

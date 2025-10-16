@@ -1,4 +1,4 @@
-package org.takeyourdata.protocol;
+package org.takeyourdata.protocol.exceptions;
 
 import java.io.IOException;
 

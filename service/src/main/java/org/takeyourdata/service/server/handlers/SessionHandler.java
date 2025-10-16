@@ -3,7 +3,7 @@ package org.takeyourdata.service.server.handlers;
 import org.jetbrains.annotations.NotNull;
 import org.takeyourdata.protocol.packets.HandshakePacket;
 import org.takeyourdata.protocol.packets.SessionPacket;
-import org.takeyourdata.service.server.JedisClient;
+import org.takeyourdata.service.server.databases.JedisClient;
 import org.takeyourdata.service.server.ProcessedPacket;
 import redis.clients.jedis.JedisPooled;
 

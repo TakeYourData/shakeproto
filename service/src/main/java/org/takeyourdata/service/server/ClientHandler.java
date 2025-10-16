@@ -1,18 +1,20 @@
 package org.takeyourdata.service.server;
 
 import org.jetbrains.annotations.NotNull;
-import org.takeyourdata.protocol.NonceException;
-import org.takeyourdata.protocol.packets.ErrorPacket;
-import org.takeyourdata.protocol.packets.HandshakePacket;
-import org.takeyourdata.protocol.packets.Packet;
-import org.takeyourdata.protocol.packets.SessionPacket;
+import org.takeyourdata.protocol.exceptions.NonceException;
+import org.takeyourdata.protocol.exceptions.SignatureException;
+import org.takeyourdata.protocol.packets.*;
 import org.takeyourdata.service.server.handlers.HandshakeHandler;
+import org.takeyourdata.service.server.handlers.KeyExchangeHandler;
 import org.takeyourdata.service.server.handlers.SessionHandler;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
 
 public class ClientHandler implements Runnable {
     private final Socket socket;
@@ -62,6 +64,21 @@ public class ClientHandler implements Runnable {
                 sendPacket(handshakePacket);
                 sendPacket(result);
             });
+        } else if (packet instanceof KeyExchangePacket keyExchangePacket) {
+            PublicKey publicKey = KeyFactory.getInstance("RSA")
+                    .generatePublic(new X509EncodedKeySpec(keyExchangePacket.getPublicKey()));
+
+            if (!keyExchangePacket.verifySignature(publicKey, keyExchangePacket.getSignature())) {
+                ErrorPacket errorPacket = new ErrorPacket(new SignatureException("Signature is invalid"));
+                sendPacket(errorPacket);
+                closeConnection();
+            }
+
+            KeyExchangeHandler keyExchangeHandler = new KeyExchangeHandler(keyExchangePacket);
+
+            keyExchangeHandler.handle(result -> {
+                // soon
+            });
         } else if (packet instanceof SessionPacket sessionPacket) {
             SessionHandler sessionHandler = new SessionHandler(sessionPacket);
 
@@ -84,6 +101,8 @@ public class ClientHandler implements Runnable {
                         handshakePacket.getLocation()
                 );
             });
+        } else if (packet instanceof ErrorPacket errorPacket) {
+            sendPacket(errorPacket);
         }
     }
 

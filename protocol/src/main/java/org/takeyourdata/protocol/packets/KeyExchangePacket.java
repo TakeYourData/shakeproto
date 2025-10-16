@@ -10,7 +10,7 @@ import java.security.*;
 public class KeyExchangePacket extends Packet {
     private byte[] publicKey;
     private byte[] signature;
-    private byte[] privateKey;
+    private PrivateKey privateKey;
 
     private final Signature sig = Signature.getInstance("SHA256withRSA");
 
@@ -37,7 +37,7 @@ public class KeyExchangePacket extends Packet {
 
         PublicKey serverPk = keyPair.getPublic();
         PrivateKey serverSk = keyPair.getPrivate();
-        this.privateKey = serverSk.getEncoded();
+        this.privateKey = serverSk;
         sig.initSign(serverSk);
         sig.update(serverPk.getEncoded());
 
@@ -46,6 +46,6 @@ public class KeyExchangePacket extends Packet {
     }
 
     public byte[] getPublicKey() { return publicKey; } // Client Public Key
-    public byte[] getPrivateKey() { return privateKey; } // Server Private Key
+    public PrivateKey getPrivateKey() { return privateKey; } // Server Private Key
     public byte[] getSignature() { return signature; } // Client Signature
 }

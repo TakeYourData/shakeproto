@@ -2,6 +2,7 @@ package org.takeyourdata.protocol.packets;
 
 import org.jetbrains.annotations.NotNull;
 import org.takeyourdata.protocol.ShakeProtocol;
+import org.takeyourdata.protocol.exceptions.TypeException;
 
 import java.io.*;
 import java.time.Instant;
@@ -46,7 +47,7 @@ public abstract class Packet implements Serializable {
             case 0x02 -> new KeyExchangePacket(dis);
             case 0x03 -> new MessagePacket(dis);
             case 0x06 -> new SessionPacket(dis);
-            default -> null;
+            default -> new ErrorPacket(new TypeException("Unknown type"));
         };
 
         packet.type = type;
