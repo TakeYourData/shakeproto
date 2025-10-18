@@ -41,7 +41,7 @@ public class KeyExchangeHandler implements Handler {
         packet.process(null);
     }
 
-    private static byte[] hash(byte[] key) throws NoSuchAlgorithmException {
+    private byte[] hash(byte[] key) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-1");
         return md.digest(key);
     }
