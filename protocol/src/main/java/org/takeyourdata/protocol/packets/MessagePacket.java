@@ -14,6 +14,7 @@ import java.util.Arrays;
 public class MessagePacket extends Packet {
     private String senderId;
     private String recipientId;
+    private byte[] authId;
     private byte[] encryptedContent;
 
     public MessagePacket(@NotNull DataInputStream dis) throws Exception {
@@ -21,6 +22,7 @@ public class MessagePacket extends Packet {
 
         this.senderId = dis.readUTF();
         this.recipientId = dis.readUTF();
+        this.authId = dis.readNBytes(20); // sha-1 hash = 20 bytes
         this.encryptedContent = dis.readAllBytes();
     }
 
@@ -58,6 +60,7 @@ public class MessagePacket extends Packet {
 
     @Override
     public void writeData(@NotNull DataOutputStream dos) throws IOException {
+        dos.write(authId);
         dos.write(encryptedContent);
     }
 
@@ -66,6 +69,9 @@ public class MessagePacket extends Packet {
     }
     public String getRecipientId() {
         return recipientId;
+    }
+    public byte[] getAuthId() {
+        return authId;
     }
     public byte[] getEncryptedContent() {
         return encryptedContent;
