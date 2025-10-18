@@ -1,11 +1,13 @@
 package org.takeyourdata.protocol.packets;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataOutputStream;
 
 public class ErrorPacket extends Packet {
     private final String error;
 
-    public ErrorPacket(Exception error) {
+    public ErrorPacket(@NotNull Exception error) {
         super(PacketType.ERROR.getValue());
         this.error = error.getMessage();
     }
@@ -16,7 +18,7 @@ public class ErrorPacket extends Packet {
     }
 
     @Override
-    public void writeData(DataOutputStream dos) throws Exception {
+    public void writeData(@NotNull DataOutputStream dos) throws Exception {
         dos.writeUTF(error);
     }
 }

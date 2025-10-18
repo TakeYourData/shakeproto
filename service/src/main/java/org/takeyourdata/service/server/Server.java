@@ -9,6 +9,11 @@ public class Server {
 
     public Server() {
         try {
+            File file = new File("./config.properties");
+            if (!file.exists()) {
+                ConfigProperties.create();
+            }
+
             ServerSocket serverSocket = new ServerSocket(PORT);
 
             while (!serverSocket.isClosed()) {
@@ -27,6 +32,6 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        Server server = new Server();
+        new Server();
     }
 }

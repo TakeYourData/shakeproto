@@ -32,7 +32,6 @@ public class ClientHandler implements Runnable {
     public void run() {
         try {
             while (!socket.isClosed()) {
-
                 int length = in.readInt();
                 byte[] data = new byte[length];
                 in.readFully(data);
@@ -76,9 +75,9 @@ public class ClientHandler implements Runnable {
 
             KeyExchangeHandler keyExchangeHandler = new KeyExchangeHandler(keyExchangePacket);
 
-            keyExchangeHandler.handle(result -> {
-                // soon
-            });
+            sendPacket(keyExchangePacket);
+
+            keyExchangeHandler.handle(result -> {});
         } else if (packet instanceof SessionPacket sessionPacket) {
             SessionHandler sessionHandler = new SessionHandler(sessionPacket);
 
