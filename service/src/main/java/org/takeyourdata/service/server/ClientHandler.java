@@ -1,9 +1,11 @@
 package org.takeyourdata.service.server;
 
+import io.github.jopenlibs.vault.Vault;
 import org.jetbrains.annotations.NotNull;
 import org.takeyourdata.protocol.exceptions.NonceException;
 import org.takeyourdata.protocol.exceptions.SignatureException;
 import org.takeyourdata.protocol.packets.*;
+import org.takeyourdata.service.server.databases.VaultClient;
 import org.takeyourdata.service.server.handlers.HandshakeHandler;
 import org.takeyourdata.service.server.handlers.KeyExchangeHandler;
 import org.takeyourdata.service.server.handlers.SessionHandler;
@@ -15,12 +17,16 @@ import java.net.Socket;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+import java.util.Map;
+import java.util.Properties;
 
 public class ClientHandler implements Runnable {
     private final Socket socket;
     private final DataInputStream in;
     private final DataOutputStream out;
 
+    private int userId;
     private byte[] secretKey;
 
     public ClientHandler(@NotNull Socket socket) throws IOException {
@@ -64,6 +70,7 @@ public class ClientHandler implements Runnable {
                 sessionPacket.writeData(out);
                 sendPacket(handshakePacket);
                 sendPacket(result);
+                this.userId = handshakePacket.getUserId();
             });
         } else if (packet instanceof KeyExchangePacket keyExchangePacket) {
             PublicKey publicKey = KeyFactory.getInstance("RSA")
@@ -75,7 +82,7 @@ public class ClientHandler implements Runnable {
                 closeConnection();
             }
 
-            KeyExchangeHandler keyExchangeHandler = new KeyExchangeHandler(keyExchangePacket);
+            KeyExchangeHandler keyExchangeHandler = new KeyExchangeHandler(keyExchangePacket, userId);
 
             sendPacket(keyExchangePacket);
 
@@ -95,6 +102,18 @@ public class ClientHandler implements Runnable {
                     ErrorPacket errorPacket = new ErrorPacket(new NonceException("Nonce is invalid"));
                     sendPacket(errorPacket);
                     closeConnection();
+                }
+
+                if (secretKey == null) {
+                    Vault vault = new VaultClient().getVault();
+                    Properties config = new ConfigProperties().get();
+
+                    Map<String, String> data = vault.logical()
+                            .read(config.getProperty("database.vault.path") + "/users/"
+                            + userId + "/" + Base64.getEncoder().withoutPadding().encodeToString(sessionPacket.getAuthId()))
+                            .getData();
+
+                    this.secretKey = Base64.getDecoder().decode(data.get("key"));
                 }
 
                 new ClientSession(

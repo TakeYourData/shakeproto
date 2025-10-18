@@ -9,10 +9,12 @@ import java.io.IOException;
 
 public class SessionPacket extends Packet {
     private final byte[] sessionToken;
+    private byte[] authId;
     private byte[] packetNonce;
 
     public SessionPacket(@NotNull DataInputStream dis) throws IOException {
         super(PacketType.SESSION.getValue());
+        this.authId = dis.readNBytes(20);
         this.sessionToken = dis.readNBytes(32);
         this.packetNonce = dis.readNBytes(32);
     }
@@ -28,6 +30,10 @@ public class SessionPacket extends Packet {
 
         dos.writeInt(length);
         dos.write(sessionToken);
+    }
+
+    public byte[] getAuthId() {
+        return authId;
     }
 
     public byte[] getSessionToken() {

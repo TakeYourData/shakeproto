@@ -10,18 +10,20 @@ import org.takeyourdata.service.server.databases.VaultClient;
 
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.HashMap;
+import java.util.Base64;
 import java.util.Map;
 import java.util.Properties;
 
 public class KeyExchangeHandler implements Handler {
     private final PublicKey cpk;
     private final PrivateKey sk;
+    private final int userId;
 
-    public KeyExchangeHandler(@NotNull KeyExchangePacket keyExchangePacket) throws Exception {
+    public KeyExchangeHandler(@NotNull KeyExchangePacket keyExchangePacket, int userId) throws Exception {
         this.cpk = KeyFactory.getInstance("RSA")
                 .generatePublic(new X509EncodedKeySpec(keyExchangePacket.getPublicKey()));
         this.sk = keyExchangePacket.getPrivateKey();
+        this.userId = userId;
     }
 
     @Override
@@ -31,12 +33,11 @@ public class KeyExchangeHandler implements Handler {
         Vault vault = new VaultClient().getVault();
         Properties config = new ConfigProperties().get();
 
-        Map<String, Object> data = new HashMap<>();
+        String stringSecretKey = Base64.getEncoder().withoutPadding().encodeToString(secretKey);
 
-        data.put("id", hash(secretKey));
-        data.put("key", secretKey);
-
-        vault.logical().write(config.getProperty("database.vault.path"), data);
+        vault.logical().write(config.getProperty("database.vault.path" + "/users/"
+                + userId + "/" + Base64.getEncoder().withoutPadding().encodeToString(hash(secretKey))),
+                Map.of("key", stringSecretKey));
 
         KeyExchangePacket keyExchangePacket = new KeyExchangePacket(secretKey);
 
