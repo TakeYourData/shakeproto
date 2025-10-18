@@ -21,6 +21,8 @@ public class ClientHandler implements Runnable {
     private final DataInputStream in;
     private final DataOutputStream out;
 
+    private byte[] secretKey;
+
     public ClientHandler(@NotNull Socket socket) throws IOException {
         this.socket = socket;
 
@@ -77,7 +79,11 @@ public class ClientHandler implements Runnable {
 
             sendPacket(keyExchangePacket);
 
-            keyExchangeHandler.handle(result -> {});
+            keyExchangeHandler.handle(result -> {
+                KeyExchangePacket exchangePacket = (KeyExchangePacket) result;
+
+                this.secretKey = exchangePacket.getSecretKey();
+            });
         } else if (packet instanceof SessionPacket sessionPacket) {
             SessionHandler sessionHandler = new SessionHandler(sessionPacket);
 
@@ -97,7 +103,8 @@ public class ClientHandler implements Runnable {
                         handshakePacket.getUserId(),
                         handshakePacket.getClientId(),
                         handshakePacket.getHardwareId(),
-                        handshakePacket.getLocation()
+                        handshakePacket.getLocation(),
+                        secretKey
                 );
             });
         } else if (packet instanceof ErrorPacket errorPacket) {

@@ -11,6 +11,7 @@ public class KeyExchangePacket extends Packet {
     private byte[] publicKey;
     private byte[] signature;
     private PrivateKey privateKey;
+    private byte[] secretKey;
 
     private final Signature sig = Signature.getInstance("SHA256withRSA");
 
@@ -21,7 +22,9 @@ public class KeyExchangePacket extends Packet {
         this.signature = dis.readNBytes(32);
     }
 
-    public KeyExchangePacket() throws Exception {}
+    public KeyExchangePacket(byte[] secretKey) throws Exception {
+        this.secretKey = secretKey;
+    }
 
     public boolean verifySignature(PublicKey verifyingKey, byte[] clientSign) throws Exception {
         sig.initVerify(verifyingKey);
@@ -48,4 +51,5 @@ public class KeyExchangePacket extends Packet {
     public byte[] getPublicKey() { return publicKey; } // Client Public Key
     public PrivateKey getPrivateKey() { return privateKey; } // Server Private Key
     public byte[] getSignature() { return signature; } // Client Signature
+    public byte[] getSecretKey() { return secretKey; } // Result Key Exchange
 }

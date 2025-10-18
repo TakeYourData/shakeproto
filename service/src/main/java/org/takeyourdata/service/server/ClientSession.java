@@ -8,7 +8,8 @@ public class ClientSession {
                          int userId,
                          String clientId,
                          String hardwareId,
-                         String location) {
+                         String location,
+                         byte[] secretKey) {
 
     }
 

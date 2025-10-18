@@ -38,7 +38,9 @@ public class KeyExchangeHandler implements Handler {
 
         vault.logical().write(config.getProperty("database.vault.path"), data);
 
-        packet.process(null);
+        KeyExchangePacket keyExchangePacket = new KeyExchangePacket(secretKey);
+
+        packet.process(keyExchangePacket);
     }
 
     private byte[] hash(byte[] key) throws NoSuchAlgorithmException {
