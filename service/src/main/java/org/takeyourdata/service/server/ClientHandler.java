@@ -1,6 +1,5 @@
 package org.takeyourdata.service.server;
 
-import io.github.jopenlibs.vault.Vault;
 import org.jetbrains.annotations.NotNull;
 import org.takeyourdata.protocol.exceptions.NonceException;
 import org.takeyourdata.protocol.exceptions.SignatureException;
@@ -17,9 +16,6 @@ import java.net.Socket;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
-import java.util.Map;
-import java.util.Properties;
 
 public class ClientHandler implements Runnable {
     private final Socket socket;
@@ -105,15 +101,9 @@ public class ClientHandler implements Runnable {
                 }
 
                 if (secretKey == null) {
-                    Vault vault = new VaultClient().getVault();
-                    Properties config = new ConfigProperties().get();
+                    VaultClient vault = new VaultClient();
 
-                    Map<String, String> data = vault.logical()
-                            .read(config.getProperty("database.vault.path") + "/users/"
-                            + userId + "/" + Base64.getEncoder().withoutPadding().encodeToString(sessionPacket.getAuthId()))
-                            .getData();
-
-                    this.secretKey = Base64.getDecoder().decode(data.get("key"));
+                    this.secretKey = vault.getAuthKey(userId, sessionPacket.getAuthId());
                 }
 
                 new ClientSession(
@@ -124,7 +114,7 @@ public class ClientHandler implements Runnable {
                         handshakePacket.getHardwareId(),
                         handshakePacket.getLocation(),
                         secretKey
-                );
+                ).entry();
             });
         } else if (packet instanceof ErrorPacket errorPacket) {
             sendPacket(errorPacket);

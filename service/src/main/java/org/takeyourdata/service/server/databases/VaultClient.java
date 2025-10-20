@@ -6,8 +6,13 @@ import io.github.jopenlibs.vault.VaultConfig;
 import io.github.jopenlibs.vault.VaultException;
 import org.takeyourdata.service.server.ConfigProperties;
 
+import java.util.Base64;
+import java.util.Map;
+import java.util.Properties;
+
 public class VaultClient {
     private final Vault vault;
+    private final Properties config = new ConfigProperties().get();
 
     public VaultClient() throws VaultException {
         ConfigProperties config = new ConfigProperties();
@@ -24,6 +29,14 @@ public class VaultClient {
                         .build();
 
         this.vault = Vault.create(vaultConfig);
+    }
+
+    public byte[] getAuthKey(int userId, byte[] authId) throws VaultException {
+        Map<String, String> data = vault.logical()
+                .read(config.getProperty("database.vault.path") + "/users/"
+                        + userId + "/" + Base64.getEncoder().withoutPadding().encodeToString(authId))
+                .getData();
+        return Base64.getDecoder().decode(data.get("key"));
     }
 
     public Vault getVault() {

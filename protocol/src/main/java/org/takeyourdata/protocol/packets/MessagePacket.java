@@ -12,16 +12,16 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 
 public class MessagePacket extends Packet {
-    private String senderId;
-    private String recipientId;
+    private int senderId;
+    private int recipientId;
     private byte[] authId;
     private byte[] encryptedContent;
 
     public MessagePacket(@NotNull DataInputStream dis) throws Exception {
         super(PacketType.MESSAGE.getValue());
 
-        this.senderId = dis.readUTF();
-        this.recipientId = dis.readUTF();
+        this.senderId = dis.readInt();
+        this.recipientId = dis.readInt();
         this.authId = dis.readNBytes(20); // sha-1 hash = 20 bytes
         this.encryptedContent = dis.readAllBytes();
     }
@@ -64,10 +64,10 @@ public class MessagePacket extends Packet {
         dos.write(encryptedContent);
     }
 
-    public String getSenderId() {
+    public int getSenderId() {
         return senderId;
     }
-    public String getRecipientId() {
+    public int getRecipientId() {
         return recipientId;
     }
     public byte[] getAuthId() {
