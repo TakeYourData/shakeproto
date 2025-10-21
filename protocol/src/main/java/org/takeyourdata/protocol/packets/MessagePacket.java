@@ -12,17 +12,25 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 
 public class MessagePacket extends Packet {
+    private byte[] nonce;
+    private int chatId;
+    private int msgId;
     private int senderId;
     private int recipientId;
     private byte[] authId;
+    // private byte[] msgKey;
     private byte[] encryptedContent;
 
     public MessagePacket(@NotNull DataInputStream dis) throws Exception {
         super(PacketType.MESSAGE.getValue());
 
+        this.nonce = dis.readNBytes(32);
+        this.chatId = dis.readInt();
+        this.msgId = dis.readInt();
         this.senderId = dis.readInt();
         this.recipientId = dis.readInt();
         this.authId = dis.readNBytes(20); // sha-1 hash = 20 bytes
+    //    this.msgKey = dis.readNBytes(16);
         this.encryptedContent = dis.readAllBytes();
     }
 
@@ -64,6 +72,15 @@ public class MessagePacket extends Packet {
         dos.write(encryptedContent);
     }
 
+    public byte[] getNonce() {
+        return nonce;
+    }
+    public int getChatId() {
+        return chatId;
+    }
+    public int getMsgId() {
+        return msgId;
+    }
     public int getSenderId() {
         return senderId;
     }
@@ -73,6 +90,10 @@ public class MessagePacket extends Packet {
     public byte[] getAuthId() {
         return authId;
     }
+    /* public byte[] getMsgKey() {
+        return msgKey;
+    }
+    */
     public byte[] getEncryptedContent() {
         return encryptedContent;
     }
