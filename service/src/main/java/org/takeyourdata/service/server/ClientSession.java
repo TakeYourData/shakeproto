@@ -5,6 +5,7 @@ import org.takeyourdata.protocol.exceptions.NonceException;
 import org.takeyourdata.protocol.packets.ErrorPacket;
 import org.takeyourdata.protocol.packets.MessagePacket;
 import org.takeyourdata.protocol.packets.Packet;
+import org.takeyourdata.protocol.packets.SyncPacket;
 import org.takeyourdata.service.server.databases.VaultClient;
 import org.takeyourdata.service.server.databases.structure.Message;
 
@@ -12,7 +13,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 
 public class ClientSession {
     private final Socket socket;
@@ -51,9 +51,12 @@ public class ClientSession {
                 byte[] data = new byte[length];
                 in.readFully(data);
 
-                MessagePacket packet = (MessagePacket) Packet.deserialize(data);
-
-                read(packet);
+                Packet packet = Packet.deserialize(data);
+                if (packet instanceof MessagePacket messagePacket) {
+                    read(messagePacket);
+                } else if (packet instanceof SyncPacket syncPacket) {
+                    sync(syncPacket);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -70,42 +73,31 @@ public class ClientSession {
     }
 
     public void read(@NotNull MessagePacket messagePacket) throws Exception {
-        // example:
-
-        VaultClient vault = new VaultClient();
-
         if (clientNonce != messagePacket.getNonce()) {
             write(new ErrorPacket(new NonceException("Nonce is invalid")));
             closeConnection();
         }
 
-        byte[] recipientKey = vault.getAuthKey(messagePacket.getRecipientId(), messagePacket.getAuthId());
-
         byte[] message = messagePacket.decryptMessage(secretKey);
-        String msg = new String(message, StandardCharsets.UTF_8);
 
         int msgId = messagePacket.getMsgId();
         int chatId = messagePacket.getChatId();
         int senderId = messagePacket.getSenderId();
         int recipientId = messagePacket.getRecipientId();
-        byte[] authId = messagePacket.getAuthId();
         long timestamp = messagePacket.getTimestamp();
 
         Message.Companion.create(
-                msgId,
                 chatId,
+                msgId,
                 senderId,
                 recipientId,
-                authId,
                 timestamp,
                 message
         );
 
-        byte[] writeMessage = messagePacket.encryptMessage(message, recipientKey);
     }
 
-    public void sync() {
-
+    public void sync(@NotNull SyncPacket syncPacket) {
     }
 
     public Session getSession() {

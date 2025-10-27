@@ -47,6 +47,7 @@ public abstract class Packet implements Serializable {
             case 0x02 -> new KeyExchangePacket(dis);
             case 0x03 -> new MessagePacket(dis);
             case 0x06 -> new SessionPacket(dis);
+            case 0x07 -> new SyncPacket(dis);
             default -> new ErrorPacket(new TypeException("Unknown type"));
         };
 

@@ -1,5 +1,7 @@
 package org.takeyourdata.service.server;
 
+import org.takeyourdata.service.server.databases.PostgresqlClient;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -13,6 +15,8 @@ public class Server {
             if (!file.exists()) {
                 ConfigProperties.create();
             }
+
+            connectDb();
 
             ServerSocket serverSocket = new ServerSocket(PORT);
 
@@ -33,5 +37,11 @@ public class Server {
 
     public static void main(String[] args) {
         new Server();
+    }
+
+    private void connectDb() {
+        PostgresqlClient postgresqlClient = new PostgresqlClient();
+
+        postgresqlClient.connect();
     }
 }

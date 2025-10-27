@@ -6,7 +6,8 @@ public enum PacketType {
     MESSAGE (0x03),
     ACK (0x04),
     ERROR (0x05),
-    SESSION (0x06);
+    SESSION (0x06),
+    SYNC(0x07);
 
     private final byte value;
 

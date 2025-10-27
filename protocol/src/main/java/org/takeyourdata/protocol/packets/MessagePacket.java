@@ -12,14 +12,14 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 
 public class MessagePacket extends Packet {
-    private byte[] nonce;
+    private final byte[] nonce;
     private int chatId;
     private int msgId;
     private int senderId;
     private int recipientId;
-    private byte[] authId;
+    private final byte[] authId;
     // private byte[] msgKey;
-    private byte[] encryptedContent;
+    private final byte[] encryptedContent;
 
     public MessagePacket(@NotNull DataInputStream dis) throws Exception {
         super(PacketType.MESSAGE.getValue());
@@ -34,7 +34,15 @@ public class MessagePacket extends Packet {
         this.encryptedContent = dis.readAllBytes();
     }
 
-    public MessagePacket() {}
+    public MessagePacket(
+            byte[] nonce,
+            byte[] authId,
+            byte[] encryptedContent
+            ) {
+        this.nonce = nonce;
+        this.authId = authId;
+        this.encryptedContent = encryptedContent;
+    }
 
     public byte[] encryptMessage(byte[] content, byte[] sessionKey) throws Exception {
         SecretKeySpec keySpec = new SecretKeySpec(sessionKey, "AES");
@@ -68,6 +76,7 @@ public class MessagePacket extends Packet {
 
     @Override
     public void writeData(@NotNull DataOutputStream dos) throws IOException {
+        dos.write(nonce);
         dos.write(authId);
         dos.write(encryptedContent);
     }

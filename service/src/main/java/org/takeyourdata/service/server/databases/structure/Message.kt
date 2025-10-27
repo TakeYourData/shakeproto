@@ -5,11 +5,10 @@ import org.jetbrains.exposed.v1.dao.IntEntity
 import org.jetbrains.exposed.v1.dao.IntEntityClass
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
-class Message(msgId: EntityID<Int>) : IntEntity(msgId) {
-    var chatId by Messages.chatId
+class Message(chatId: EntityID<Int>) : IntEntity(chatId) {
+    var msgId by Messages.msgId
     var senderId by Messages.senderId
     var recipientId by Messages.recipientId
-    var authId by Messages.authId
     var timestamp by Messages.timestamp
     var content by Messages.content
 
@@ -21,21 +20,19 @@ class Message(msgId: EntityID<Int>) : IntEntity(msgId) {
         }
 
         fun create(
-            msgId: Int,
             chatId: Int,
+            msgId: Int,
             senderId: Int,
             recipientId: Int,
-            authId: ByteArray,
             timestamp: Long,
             content: ByteArray
         ) {
 
             transaction {
-                Message.new(msgId) {
-                    this.chatId      = chatId
+                Message.new(chatId) {
+                    this.msgId      = msgId
                     this.senderId    = senderId
                     this.recipientId = recipientId
-                    this.authId      = authId
                     this.timestamp   = timestamp
                     this.content     = content
                 }
