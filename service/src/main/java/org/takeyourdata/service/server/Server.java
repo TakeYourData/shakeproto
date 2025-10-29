@@ -13,6 +13,7 @@ public class Server {
         try {
             File file = new File("./config.properties");
             if (!file.exists()) {
+                file.createNewFile();
                 ConfigProperties.create();
             }
 

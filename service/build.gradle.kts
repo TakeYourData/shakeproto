@@ -17,4 +17,22 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:1.0.0-rc-2")
     implementation("org.jetbrains.exposed:exposed-dao:1.0.0-rc-2")
     implementation("org.jetbrains.exposed:exposed-jdbc:1.0.0-rc-2")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.3.0-Beta1")
+}
+
+tasks.withType<Jar> {
+    manifest {
+        attributes["Main-Class"] = "org.takeyourdata.service.server.Server"
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from(sourceSets.main.get().output)
+
+    dependsOn(configurations.runtimeClasspath)
+    from({
+        configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map { zipTree(it) }
+    }) {
+        exclude("META-INF/*.RSA", "META-INF/*.SF", "META-INF/*.DSA")
+    }
 }

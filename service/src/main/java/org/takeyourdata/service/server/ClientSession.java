@@ -6,7 +6,6 @@ import org.takeyourdata.protocol.packets.ErrorPacket;
 import org.takeyourdata.protocol.packets.MessagePacket;
 import org.takeyourdata.protocol.packets.Packet;
 import org.takeyourdata.protocol.packets.SyncPacket;
-import org.takeyourdata.service.server.databases.VaultClient;
 import org.takeyourdata.service.server.databases.structure.Message;
 
 import java.io.DataInputStream;
@@ -94,7 +93,6 @@ public class ClientSession {
                 timestamp,
                 message
         );
-
     }
 
     public void sync(@NotNull SyncPacket syncPacket) {
